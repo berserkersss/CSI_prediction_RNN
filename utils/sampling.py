@@ -41,7 +41,7 @@ def mnist_noniid(dataset, num_users):
     idxs_labels = np.vstack((idxs, labels))
     idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
     idxs = idxs_labels[0,:]
-    temp_labels = idxs_labels[1,:]
+    #temp_labels = idxs_labels[1,:]
 
     # divide and assign
     for i in range(num_users):

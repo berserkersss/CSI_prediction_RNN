@@ -33,9 +33,11 @@ if __name__ == '__main__':
 
         # sample users
         #if args.iid:
-        dict_users_iid_temp = (mnist_iid(dataset_train, args.num_users))
+        dict_users_iid_temp = mnist_iid(dataset_train, args.num_users)
         #else:
         dict_users = mnist_noniid(dataset_train, args.num_users)
+
+        #dict_users_iid_temp = dict_users
     elif args.dataset == 'cifar':
         trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
@@ -207,6 +209,7 @@ if __name__ == '__main__':
         para_cl = w_cl_iter[i]['layer_input.weight']
         para_fl = w_fl_iter[i]['layer_input.weight']
         line2 = torch.norm(para_cl-para_fl)
+        print(torch.norm(para_cl-para_fl)/torch.norm(para_cl))
         line2_iter_list.append(line2.item())
 
     print('y_line1=',line1_iter_list)# numerical 
