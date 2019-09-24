@@ -56,6 +56,8 @@ if __name__ == '__main__':
             train_index = train_index.T
             dict_users[k] = np.array(train_index[0].astype(int))
 
+        dict_user_iid = mnist_iid(dataset_train, args.num_users)
+
 
 
 
@@ -88,44 +90,20 @@ if __name__ == '__main__':
 
     net_glob_fl = copy.deepcopy(net_glob)
     net_glob_cl = copy.deepcopy(net_glob)
+    net_glob_iid = copy.deepcopy(net_glob)
+    net_glob_iid.train()
     net_glob_fl.train()
     net_glob_cl.train()
 
     # copy weights
     w_glob_fl = net_glob_fl.state_dict()
     w_glob_cl = net_glob_cl.state_dict()
+    w_glob_iid = net_glob_iid.state_dict()
 
 
     # training
-    eta = 0.01
-    Nepoch = 5 # num of epoch
-    loss_train_fl, loss_train_cl = [], []
-    cv_loss, cv_acc = [], []
-    val_loss_pre, counter = 0, 0
-    net_best = None
-    best_loss = None
-    val_acc_list, net_list = [], []
-    para_g = []
-    loss_grad = []
-    delta_batch_loss_list = []
-    beta_list = []
-    count_list = np.zeros(256).tolist()
-    line1_iter_list = []
-    line2_iter_list = []
-    wgfed_list = []
-    wgcl_list = []
-
-    w_locals, loss_locals = [], []
-    w0_locals,loss0_locals =[], []
-    weight_div_list = []
-    para_cl = []
-    para_fl = []
-    beta_locals, mu_locals, sigma_locals = [],[],[]
-    x_stat_loacals, pxm_locals =[],[]
-    data_locals = [[] for i in range(args.epochs)]
-    w_fl_iter,w_cl_iter = [], []
-    beta_max_his, mu_max_his, sigma_max_his = [], [], []
-    acc_train_cl_his, acc_train_fl_his = [], []
+    loss_train_fl, loss_train_cl, loss_train_iid = [], [], []
+    acc_train_cl_his, acc_train_fl_his, acc_train_iid_his = [], [], []
 
     net_glob_fl.eval()
     acc_train_cl, loss_train_clxx = test_img(net_glob_cl, dataset_train, args)
@@ -151,7 +129,7 @@ if __name__ == '__main__':
 
         w_glob_fl = FedAvg(w_locals)# update the global model
         net_glob_fl.load_state_dict(w_glob_fl)# copy weight to net_glob
-        w_fl_iter.append(copy.deepcopy(w_glob_fl))
+
 
         loss_fl = sum(loss_locals) / len(loss_locals)
         loss_train_fl.append(loss_fl) # loss of FL
@@ -174,7 +152,7 @@ if __name__ == '__main__':
 
         w_glob_cl = FedAvg_Optimize(w_locals, Ld)  # update the global model
         net_glob_cl.load_state_dict(w_glob_cl)  # copy weight to net_glob
-        w_cl_iter.append(copy.deepcopy(w_glob_cl))
+
 
         loss_cl = sum(loss_locals) / len(loss_locals)
         loss_train_cl.append(loss_cl)  # loss of FL
@@ -185,12 +163,25 @@ if __name__ == '__main__':
         print("Testing accuracy: {:.2f}".format(acc_test_cl))
         acc_train_cl_his.append(acc_test_cl.item())
 
-    colors = ["blue", "red"]
-    labels = ["FedAvg", "FedAvg_Optimize"]
+    # CL_Optimize setting
+    for iter in range(args.epochs):  # num of iterations
+        local = CLUpdate(args=args, dataset=dataset_train, idxs=dict_user_iid)  # data select
+        w, loss = local.cltrain(net=copy.deepcopy(net_glob_iid).to(args.device))
+        net_glob_iid.load_state_dict(w)  # copy weight to net_glob
+        print('cl,iter = ', iter, 'loss=', loss)
+         # testing
+        net_glob_iid.eval()
+        acc_test_iid, loss_test_iid = test_img(net_glob_iid, dataset_test, args)
+        print("Testing accuracy: {:.2f}".format(acc_test_iid))
+        acc_train_iid_his.append(acc_test_iid.item())
+
+    colors = ["blue", "red", "black"]
+    labels = ["FedAvg", "FedAvg_Optimize", "CL"]
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(acc_train_fl_his, c=colors[0], label=labels[0])
     ax.plot(acc_train_cl_his, c=colors[1], label=labels[1])
+    ax.plot(acc_train_iid_his, c=colors[2], label=labels[2])
     ax.legend()
     plt.xlabel('Iterations')
     plt.ylabel('Accuracy')
@@ -203,6 +194,11 @@ if __name__ == '__main__':
     filename = "Accuracy_FedAvg_Optmize.csv"
     pd_data = pd.DataFrame(acc_train_cl_his)
     pd_data.to_csv(filename)
+
+    filename = "Accuracy_CL.csv"
+    pd_data = pd.DataFrame(acc_train_iid_his)
+    pd_data.to_csv(filename)
+
 
 
 
