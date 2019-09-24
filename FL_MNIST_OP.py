@@ -56,7 +56,7 @@ if __name__ == '__main__':
             train_index = train_index.T
             dict_users[k] = np.array(train_index[0].astype(int))
 
-        dict_user_iid = mnist_iid(dataset_train, args.num_users)
+        dict_users_iid_temp = mnist_iid(dataset_train, args.num_users)
 
 
 
@@ -141,6 +141,7 @@ if __name__ == '__main__':
         acc_train_fl_his.append(acc_test_fl.item())
 
     # FL_Optimize setting
+
     for iter in range(args.epochs):  # num of iterations
         w_locals, loss_locals = [], []
         # M clients local update
@@ -164,6 +165,9 @@ if __name__ == '__main__':
         acc_train_cl_his.append(acc_test_cl.item())
 
     # CL_Optimize setting
+    dict_user_iid = []
+    for iter in range(args.num_users):
+        dict_user_iid.extend(dict_users_iid_temp[iter])
     for iter in range(args.epochs):  # num of iterations
         local = CLUpdate(args=args, dataset=dataset_train, idxs=dict_user_iid)  # data select
         w, loss = local.cltrain(net=copy.deepcopy(net_glob_iid).to(args.device))
