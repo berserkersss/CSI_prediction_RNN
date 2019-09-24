@@ -19,6 +19,7 @@ def FedAvg(w):
 def FedAvg_Optimize(w, Ld):
     w_avg = copy.deepcopy(w[0])
     for k in w_avg.keys():
+        w_avg[k] = w_avg[k]*Ld[0]
         for i in range(1, len(w)):
             w_avg[k] += w[i][k] * Ld[i]
     return w_avg

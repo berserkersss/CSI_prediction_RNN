@@ -39,6 +39,7 @@ if __name__ == '__main__':
         num_img = [800, 800, 600, 400, 400]
         num_label = [2, 2, 2, 4, 8]
         Ld = [0.1089,   0.1279,    0.1854,    0.1853,    0.3924]
+        #Ld = [0.02,   0.02,    0.02,    0.04,    0.9]
 
         dict_usersx = mnist_noniid(dataset_train, args.num_users)
         dict_users = {}
@@ -53,9 +54,7 @@ if __name__ == '__main__':
             # 修剪数据集使得只有图片和标签,把序号剔除
             train_index = train_index.values
             train_index = train_index.T
-            y = train_index[0].tolist()
-            y = list(map(int, y))
-            dict_users[k] = np.array(y)
+            dict_users[k] = np.array(train_index[0].astype(int))
 
 
 
@@ -167,9 +166,7 @@ if __name__ == '__main__':
     for iter in range(args.epochs):  # num of iterations
         w_locals, loss_locals = [], []
         # M clients local update
-        m = max(int(args.frac * args.num_users), 1)  # num of selected users
-        idxs_users = np.random.choice(range(args.num_users), m, replace=False)  # select randomly m clients
-        for idx in idxs_users:
+        for idx in range(args.num_users):
             local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])  # data select
             w, loss = local.train(net=copy.deepcopy(net_glob_cl).to(args.device))
             w_locals.append(copy.deepcopy(w))  # collect local model
@@ -186,7 +183,7 @@ if __name__ == '__main__':
         net_glob_cl.eval()
         acc_test_cl, loss_test_clxx = test_img(net_glob_cl, dataset_test, args)
         print("Testing accuracy: {:.2f}".format(acc_test_cl))
-        acc_train_fl_his.append(acc_test_cl.item())
+        acc_train_cl_his.append(acc_test_cl.item())
 
     colors = ["blue", "red"]
     labels = ["FedAvg", "FedAvg_Optimize"]
