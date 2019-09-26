@@ -86,21 +86,21 @@ if __name__ == '__main__':
     acc_train_cl_his2, acc_train_fl_his2 = [], []
 
     # 新建存放数据的文件
-    filename = 'result/' + "Accuracy_FedAvg_unbalance_MLP.csv"
+    filename = 'result/MLP/' + "Accuracy_FedAvg_unbalance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Accuracy_FedAvg_FedAvg_Optimize_unbalance_MLP.csv"
+    filename = 'result/MLP/' + "Accuracy_FedAvg_FedAvg_Optimize_unbalance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Accuracy_FedAvg_balance_MLP.csv"
+    filename = 'result/MLP/' + "Accuracy_FedAvg_balance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Accuracy_FedAvg_Optimize_balance_MLP.csv"
+    filename = 'result/MLP/' + "Accuracy_FedAvg_Optimize_balance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Loss_FedAvg_unbalance_MLP.csv"
+    filename = 'result/MLP/' + "Loss_FedAvg_unbalance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Loss_FedAvg_FedAvg_Optimize_unbalance_MLP.csv"
+    filename = 'result/MLP/' + "Loss_FedAvg_FedAvg_Optimize_unbalance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Loss_FedAvg_balance_MLP.csv"
+    filename = 'result/MLP/' + "Loss_FedAvg_balance_MLP.csv"
     np.savetxt(filename, [])
-    filename = 'result/' + "Loss_FedAvg_Optimize_balance_MLP.csv"
+    filename = 'result/MLP/' + "Loss_FedAvg_Optimize_balance_MLP.csv"
     np.savetxt(filename, [])
 
     for iter in range(args.epochs):  # num of iterations
