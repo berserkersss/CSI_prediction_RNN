@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # sample users
     num_img = [1000, 600, 600, 400, 400]
-    num_label = [2, 2, 2, 2, 8]
+    num_label = [2, 4, 8, 8, 8]
     Ld = [ 0.0577 ,   0.1213 ,   0.3120 ,   0.2814 ,   0.2276]
 
     num_img = [1000, 600, 600, 400, 400]
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     dict_users, dict_users_balance = {}, {}
     for k in range(len(num_img)):
         #  导入unbalance数据集
-        csv_path_train_data = 'csv/' + 'user' + str(k) + 'train_index' + '_unbalance'+ '.csv'
+        csv_path_train_data = 'csv/' + 'user' + str(k) + 'train_index' + '_balance'+ '.csv'
         train_index = pd.read_csv(csv_path_train_data, header=None)
 
         # 修剪数据集使得只有图片和标签,把序号剔除
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         dict_users[k] = np.array(train_index[0].astype(int))
 
         #  导入balance数据集
-        csv_path_train_data = 'csv/' + 'user' + str(k) + 'train_index_balance' + '.csv'
+        csv_path_train_data = 'csv/' + 'user' + str(k) + 'train_index'+ '_unbalance' + '.csv'
         train_index = pd.read_csv(csv_path_train_data, header=None)
 
         train_index = train_index.values
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     # 新建存放数据的文件
     filename = 'result/CNN/' + "Accuracy_FedAvg_bigdiff_CNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Accuracy_FedAvg_FedAvg_Optimize_bigdiff_CNN.csv"
+    filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_bigdiff_CNN.csv"
     np.savetxt(filename, [])
     filename = 'result/CNN/' + "Accuracy_FedAvg_smalldiff_CNN.csv"
     np.savetxt(filename, [])
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     np.savetxt(filename, [])
     filename = 'result/CNN/' + "Loss_FedAvg_bigdiff_CNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_FedAvg_Optimize_bigdiff_CNN.csv"
+    filename = 'result/CNN/' + "Loss_FedAvg_Optimize_bigdiff_CNN.csv"
     np.savetxt(filename, [])
     filename = 'result/CNN/' + "Loss_FedAvg_smalldiff_CNN.csv"
     np.savetxt(filename, [])
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         w_glob_fl2 = FedAvg(w_locals)  # update the global model
         net_glob_fl2.load_state_dict(w_glob_fl2)  # copy weight to net_glob
-        acc_train_cl_his2.append(acc_test_cl2.item())
+
 
         # Loss
         loss = sum(loss_locals) / len(loss_locals)
@@ -202,6 +202,8 @@ if __name__ == '__main__':
         net_glob_cl2.eval()
         acc_test_cl2, loss_test_clxx = test_img(net_glob_cl2, dataset_test, args)
         print("Testing accuracy: {:.2f}".format(acc_test_cl2))
+        acc_train_cl_his2.append(acc_test_cl2.item())
+
 
         filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_smalldiff_CNN.csv"
         with open(filename, "a") as myfile:
