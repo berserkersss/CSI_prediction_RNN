@@ -34,12 +34,12 @@ if __name__ == '__main__':
 
     # sample users
     num_img = [1000, 600, 600, 400, 400]
-    num_label = [2, 4, 8, 8, 8]
-    Ld = [ 0.0577 ,   0.1213 ,   0.3120 ,   0.2814 ,   0.2276]
+    num_label = [2, 4, 4, 4, 8]
+    Ld_balance = [ 0.0577 ,   0.1213 ,   0.3120 ,   0.2814 ,   0.2276]
 
     num_img = [1000, 600, 600, 400, 400]
-    num_label = [2, 4, 4, 4, 8]
-    Ld_balance = [  0.0622 ,   0.2104 ,   0.2136 ,   0.1284 ,   0.3855]
+    num_label = [2, 4, 8, 8, 8]
+    Ld = [  0.0622 ,   0.2104 ,   0.2136 ,   0.1284 ,   0.3855]
 
     dict_users, dict_users_balance = {}, {}
     for k in range(len(num_img)):
