@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Python version: 3.6
-# 这个用于MLP的仿真
-
+# 这个用于CNN的仿真, 手写体只需要一个通道
 import matplotlib
 import pandas as pd
 
@@ -33,6 +32,8 @@ if __name__ == '__main__':
     dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True, transform=trans_mnist)
     dataset_test = datasets.MNIST('../data/mnist/', train=False, download=True, transform=trans_mnist)
 
+
+
     # sample users
     num_img = [1000, 600, 600, 400, 400]
     num_label = [2, 2, 8, 8, 8]
@@ -53,11 +54,10 @@ if __name__ == '__main__':
         dict_users[k] = np.array(train_index[0].astype(int))
 
     img_size = dataset_train[0][0].shape
+    # print('img_size=',img_size)
 
-    len_in = 1
-    for x in img_size:
-        len_in *= x
-    net_glob = MLP(dim_in=len_in, dim_hidden=64, dim_out=args.num_classes).to(args.device)
+    net_glob = CNNMnist(args=args).to(args.device)
+
 
     net_glob_fl = copy.deepcopy(net_glob)
     net_glob_cl = copy.deepcopy(net_glob)
@@ -70,8 +70,8 @@ if __name__ == '__main__':
     w_glob_cl = net_glob_cl.state_dict()
 
     # training
-    loss_train_fl, loss_train_cl= [], []
-    acc_train_cl_his, acc_train_fl_his = [], []
+    loss_train_fl, loss_train_cl, loss_train_iid = [], [], []
+    acc_train_cl_his, acc_train_fl_his, acc_train_iid_his = [], [], []
 
     net_glob_cl.eval()
     acc_test_cl, loss_test_clxx = test_img(net_glob_cl, dataset_test, args)
@@ -221,36 +221,37 @@ if __name__ == '__main__':
     ax.legend()
     plt.xlabel('Iterations')
     plt.ylabel('Accuracy')
-    plt.savefig('Figure/Accuracy.png')
+    plt.savefig('Figure/Accuracy_CNN.png')
 
-    filename = 'result/' + "Accuracy_FedAvg_unbalance.csv"
+    filename = 'result/' + "Accuracy_FedAvg_unbalance_CNN.csv"
     pd_data = pd.DataFrame(acc_train_fl_his)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Accuracy_FedAvg_FedAvg_Optimize_unbalance.csv"
+    filename = 'result/' + "Accuracy_FedAvg_FedAvg_Optimize_unbalance_CNN.csv"
     pd_data = pd.DataFrame(acc_train_cl_his)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Accuracy_FedAvg_balance.csv"
+    filename = 'result/' + "Accuracy_FedAvg_balance_CNN.csv"
     pd_data = pd.DataFrame(acc_train_fl_his2)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Accuracy_FedAvg_Optimize_balance.csv"
+    filename = 'result/' + "Accuracy_FedAvg_Optimize_balance_CNN.csv"
     pd_data = pd.DataFrame(acc_train_cl_his2)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Loss_FedAvg_unbalance.csv"
+    filename = 'result/' + "Loss_FedAvg_unbalance_CNN.csv"
     pd_data = pd.DataFrame(loss_train_fl)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Loss_FedAvg_FedAvg_Optimize_unbalance.csv"
+    filename = 'result/' + "Loss_FedAvg_FedAvg_Optimize_unbalance_CNN.csv"
     pd_data = pd.DataFrame(loss_train_cl)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Loss_FedAvg_balance.csv"
+    filename = 'result/' + "Loss_FedAvg_balance_CNN.csv"
     pd_data = pd.DataFrame(loss_train_fl2)
     pd_data.to_csv(filename)
 
-    filename = 'result/' + "Loss_FedAvg_Optimize_balance.csv"
+    filename = 'result/' + "Loss_FedAvg_Optimize_balance_CNN.csv"
     pd_data = pd.DataFrame(loss_train_cl2)
     pd_data.to_csv(filename)
+
