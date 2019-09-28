@@ -18,11 +18,11 @@ if __name__ == '__main__':
     ax = fig.add_subplot(111)
     #  导入unbalance数据集
     for i in range(num):
-        csv_path_accuracy = 'result/CNN/' + 'Accuracy_' + labels[i] + '_CNN.csv'
+        csv_path_accuracy = 'result/MLP/' + 'Accuracy_' + labels[i] + '_MLP.csv'
         accuracy = pd.read_csv(csv_path_accuracy, header=None)
         accuracy = accuracy.values
         ax.plot(accuracy[0], c=colors[i], label=labels[i])
         ax.legend()
         plt.xlabel('Iterations')
         plt.ylabel('Accuracy')
-        plt.savefig('Figure/Accuracy_CNN.png')
+        plt.savefig('Figure/Accuracy.png')
