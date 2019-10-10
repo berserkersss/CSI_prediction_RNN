@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Python version: 3.6
-# 这个用于CNN的仿真, 手写体只需要一个通道
+# 这个用于MLP的仿真, 手写体只需要一个通道
 import matplotlib
 import pandas as pd
 
@@ -34,12 +34,12 @@ if __name__ == '__main__':
 
     # sample users
     num_img = [1000, 600, 600, 400, 400]
-    num_label = [2, 2, 3, 2, 8]
-    Ld = [0.0587, 0.0729, 0.1926, 0.0558, 0.6201]
+    num_label = [2, 1, 3, 2, 8]
+    Ld = [0.0612, 0.0335, 0.2008, 0.0582, 0.6465]
 
-    num_img = [600, 600, 600, 600, 600]
-    num_label = [2, 2, 3, 2, 8]
-    Ld_balance = [0.1325, 0.0475, 0.1123, 0.0576, 0.6500]
+    num_img = [1000, 600, 600, 400, 400]
+    num_label = [1, 1, 1, 1, 8]
+    Ld_balance = [0.0346, 0.0979, 0.0723, 0.0766, 0.7186]
 
     dict_users, dict_users_balance = {}, {}
     for k in range(len(num_img)):
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     acc_train_cl_his2, acc_train_fl_his2 = [], []
 
     # 新建存放数据的文件
-    filename = 'result/MLP/' + "Accuracy_FedAvg_idd_MLP.csv"
+    filename = 'result/MLP/' + "Accuracy_FedAvg_iid_MLP.csv"
     np.savetxt(filename, [])
     filename = 'result/MLP/' + "Accuracy_FedAvg_unbalance_MLP.csv"
     np.savetxt(filename, [])
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         print("Testing accuracy: {:.2f}".format(acc_test_cl))
         acc_train_cl_his_iid.append(acc_test_cl)
 
-        filename = 'result/MLP/' + "Accuracy_FedAvg_idd_MLP.csv"
+        filename = 'result/MLP/' + "Accuracy_FedAvg_iid_MLP.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_cl) + ',')
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
         # Loss
         print('cl,iter = ', iter, 'loss=', loss_cl)
-        filename = 'result/MLP/' + "Loss_FedAvg_idd_MLP.csv"
+        filename = 'result/MLP/' + "Loss_FedAvg_iid_MLP.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss_cl) + ',')
 

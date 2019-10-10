@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Python version: 3.6
-# 用于CNN的平衡与不平衡数据的仿真, 手写体只需要一个通道
+# 这个用于RNN的不同分布差异数据仿真
 import matplotlib
 import pandas as pd
 
@@ -17,7 +17,7 @@ from utils.sampling import mnist_iid, mnist_noniid, cifar_iid
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Update import CLUpdate
-from models.Nets import MLP, CNNMnist, CNNCifar
+from models.Nets import MLP, RNNmnist
 from models.Fed import FedAvg
 from models.Fed import FedAvg_Optimize
 from models.test import test_img
@@ -34,14 +34,14 @@ if __name__ == '__main__':
 
     # sample users
     num_img = [1000, 600, 600, 400, 400]
-    num_label = [1, 1, 1, 1, 8]
-    Ld = [0.0346, 0.0979, 0.0723, 0.0766, 0.7186]
+    num_label = [2, 2, 3, 2, 8]
+    Ld = [0.0587, 0.0729, 0.1926, 0.0558, 0.6201]
 
-    num_img = [600, 600, 600, 600, 600]
-    num_label = [1, 1, 1, 1, 8]
-    Ld_balance = [0.0222, 0.0755, 0.0371, 0.0373, 0.8278]
+    num_img = [1000, 600, 600, 400, 400]
+    num_label = [2, 2, 2, 2, 8]
+    Ld_L = [0.0711, 0.0940, 0.1725, 0.0983, 0.5641]
 
-    dict_users, dict_users_balance = {}, {}
+    dict_users, dict_users_L = {}, {}
     for k in range(len(num_img)):
         #  导入unbalance数据集
         csv_path_train_data = 'csv/' + 'user' + str(k) + 'train_index' + '_unbalance' + '.csv'
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
         train_index = train_index.values
         train_index = train_index.T
-        dict_users_balance[k] = np.array(train_index[0].astype(int))
+        dict_users_L[k] = np.array(train_index[0].astype(int))
 
     dict_users_iid_temp = mnist_iid(dataset_train, args.num_users)
     dict_users_iid = []
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     img_size = dataset_train[0][0].shape
     # print('img_size=',img_size)
 
-    net_glob = CNNMnist(args=args).to(args.device)
+    net_glob = RNNmnist().to(args.device)
 
     net_glob_cl_iid = copy.deepcopy(net_glob)
     net_glob_fl = copy.deepcopy(net_glob)
@@ -93,25 +93,23 @@ if __name__ == '__main__':
     acc_train_cl_his2, acc_train_fl_his2 = [], []
 
     # 新建存放数据的文件
-    filename = 'result/CNN/' + "Accuracy_FedAvg_iid_CNN.csv"
+    filename = 'result/RNN_D/' + "Accuracy_FedAvg_idd_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Accuracy_FedAvg_unbalance_CNN.csv"
+    filename = 'result/RNN_D/' + "Accuracy_FedAvg_S_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_unbalance_CNN.csv"
+    filename = 'result/RNN_D/' + "Accuracy_FedAvg_Optimize_S_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Accuracy_FedAvg_balance_CNN.csv"
+    filename = 'result/RNN_D/' + "Accuracy_FedAvg_L_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_balance_CNN.csv"
+    filename = 'result/RNN_D/' + "Accuracy_FedAvg_Optimize_L_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_Optimize_iid_CNN.csv"
+    filename = 'result/RNN_D/' + "Loss_FedAvg_S_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_unbalance_CNN.csv"
+    filename = 'result/RNN_D/' + "Loss_FedAvg_Optimize_S_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_Optimize_unbalance_CNN.csv"
+    filename = 'result/RNN_D/' + "Loss_FedAvg_L_RNN.csv"
     np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_balance_CNN.csv"
-    np.savetxt(filename, [])
-    filename = 'result/CNN/' + "Loss_FedAvg_Optimize_balance_CNN.csv"
+    filename = 'result/RNN_D/' + "Loss_FedAvg_Optimize_L_RNN.csv"
     np.savetxt(filename, [])
 
     for iter in range(args.epochs):  # num of iterations
@@ -123,7 +121,7 @@ if __name__ == '__main__':
         print("Testing accuracy: {:.2f}".format(acc_test_cl))
         acc_train_cl_his_iid.append(acc_test_cl)
 
-        filename = 'result/CNN/' + "Accuracy_FedAvg_iid_CNN.csv"
+        filename = 'result/RNN_D/' + "Accuracy_FedAvg_idd_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_cl) + ',')
 
@@ -133,18 +131,19 @@ if __name__ == '__main__':
 
         # Loss
         print('cl,iter = ', iter, 'loss=', loss_cl)
-        filename = 'result/CNN/' + "Loss_FedAvg_iid_CNN.csv"
+        filename = 'result/RNN_D/' + "Loss_FedAvg_idd_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss_cl) + ',')
 
         # FL setting
+
         # testing
         net_glob_fl.eval()
         acc_test_fl, loss_test_flxx = test_img(net_glob_fl, dataset_test, args)
         print("Testing accuracy: {:.2f}".format(acc_test_fl))
         acc_train_fl_his.append(acc_test_fl)
 
-        filename = 'result/CNN/' + "Accuracy_FedAvg_unbalance_CNN.csv"
+        filename = 'result/RNN_D/' + "Accuracy_FedAvg_S_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_fl) + ',')
 
@@ -164,7 +163,7 @@ if __name__ == '__main__':
         # Loss
         loss = sum(loss_locals) / len(loss_locals)
         print('fl,iter = ', iter, 'loss=', loss)
-        filename = 'result/CNN/' + "Loss_FedAvg_unbalance_CNN.csv"
+        filename = 'result/RNN_D/' + "Loss_FedAvg_S_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss) + ',')
 
@@ -176,7 +175,7 @@ if __name__ == '__main__':
         print("Testing accuracy: {:.2f}".format(acc_test_cl))
         acc_train_cl_his.append(acc_test_cl)
 
-        filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_unbalance_CNN.csv"
+        filename = 'result/RNN_D/' + "Accuracy_FedAvg_Optimize_S_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_cl) + ',')
 
@@ -194,7 +193,7 @@ if __name__ == '__main__':
         loss = sum(loss_locals) / len(loss_locals)
         print('fl_OP,iter = ', iter, 'loss=', loss)
 
-        filename = 'result/CNN/' + "Loss_FedAvg_Optimize_unbalance_CNN.csv"
+        filename = 'result/RNN_D/' + "Loss_FedAvg_Optimize_S_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss) + ',')
 
@@ -206,7 +205,7 @@ if __name__ == '__main__':
         print("Testing accuracy: {:.2f}".format(acc_test_fl2))
         acc_train_fl_his2.append(acc_test_fl2)
 
-        filename = 'result/CNN/' + "Accuracy_FedAvg_balance_CNN.csv"
+        filename = 'result/RNN_D/' + "Accuracy_FedAvg_L_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_fl2) + ',')
 
@@ -215,7 +214,7 @@ if __name__ == '__main__':
         m = max(int(args.frac * args.num_users), 1)  # num of selected users
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)  # select randomly m clients
         for idx in idxs_users:
-            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users_balance[idx])  # data select
+            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users_L[idx])  # data select
             w, loss = local.train(net=copy.deepcopy(net_glob_fl2).to(args.device))
             w_locals.append(copy.deepcopy(w))  # collect local model
             loss_locals.append(copy.deepcopy(loss))  # collect local loss fucntion
@@ -225,42 +224,42 @@ if __name__ == '__main__':
 
         # Loss
         loss = sum(loss_locals) / len(loss_locals)
-        print('fl_balance,iter = ', iter, 'loss=', loss)
-        filename = 'result/CNN/' + "Loss_FedAvg_balance_CNN.csv"
+        print('fl_L,iter = ', iter, 'loss=', loss)
+        filename = 'result/RNN_D/' + "Loss_FedAvg_L_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss) + ',')
 
-        # FL_Optimize_balance setting
+        # FL_Optimize_L setting
         # testing
         net_glob_cl2.eval()
         acc_test_cl2, loss_test_clxx = test_img(net_glob_cl2, dataset_test, args)
         print("Testing accuracy: {:.2f}".format(acc_test_cl2))
         acc_train_cl_his2.append(acc_test_cl2)
 
-        filename = 'result/CNN/' + "Accuracy_FedAvg_Optimize_balance_CNN.csv"
+        filename = 'result/RNN_D/' + "Accuracy_FedAvg_Optimize_L_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(acc_test_cl2) + ',')
 
         w_locals, loss_locals = [], []
         # M clients local update
         for idx in range(args.num_users):
-            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users_balance[idx])  # data select
+            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users_L[idx])  # data select
             w, loss = local.train(net=copy.deepcopy(net_glob_cl2).to(args.device))
             w_locals.append(copy.deepcopy(w))  # collect local model
             loss_locals.append(copy.deepcopy(loss))  # collect local loss fucntion
 
-        w_glob_cl2 = FedAvg_Optimize(w_locals, Ld_balance)  # update the global model
+        w_glob_cl2 = FedAvg_Optimize(w_locals, Ld_L)  # update the global model
         net_glob_cl2.load_state_dict(w_glob_cl2)  # copy weight to net_glob
 
         loss = sum(loss_locals) / len(loss_locals)
-        print('fl_OP_balance,iter = ', iter, 'loss=', loss)
+        print('fl_OP_L,iter = ', iter, 'loss=', loss)
 
-        filename = 'result/CNN/' + "Loss_FedAvg_Optimize_balance_CNN.csv"
+        filename = 'result/RNN_D/' + "Loss_FedAvg_Optimize_L_RNN.csv"
         with open(filename, "a") as myfile:
             myfile.write(str(loss) + ',')
 
     colors = ["navy", "red", "black", "orange", "violet"]
-    labels = ["FedAvg_unbalance", "FedAvg_Optimize_unbalance", "FedAvg_balance", "FedAvg_Optimize_balance", "CL_iid"]
+    labels = ["FedAvg_S", "FedAvg_Optimize_S", "FedAvg_L", "FedAvg_Optimize_L", "CL_iid"]
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(acc_train_fl_his, c=colors[0], label=labels[0])
@@ -271,4 +270,4 @@ if __name__ == '__main__':
     ax.legend()
     plt.xlabel('Iterations')
     plt.ylabel('Accuracy')
-    plt.savefig('Figure/Accuracy_CNN.png')
+    plt.savefig('Figure/Accuracy_RNN.png')
