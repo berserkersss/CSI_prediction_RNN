@@ -15,7 +15,7 @@ import random
 # torch.manual_seed(1)    # reproducible
 
 # Hyper Parameters
-TIME_STEP = 900  # rnn time step
+TIME_STEP = 20  # rnn time step
 INPUT_SIZE = 1  # rnn input size
 LR = 0.02  # learning rate
 
@@ -23,7 +23,7 @@ LR = 0.02  # learning rate
 state_tr_matrix = np.array([[0.3, 0.1, 0.1], [0.6, 0.8, 0.5], [0.1, 0.1, 0.3]])
 state = 0
 csi = []
-for step in range(100000):
+for step in range(1000):
     csi.append(state)
     number = random.uniform(0, 1)
     cdf_prob = 0
@@ -89,7 +89,7 @@ plt.ion()  # continuously plot
 pred_y_list = []
 pred_y_list2 = []
 total_ac = []
-for step in range(90000):
+for step in range(900):
     start, end = step, step + TIME_STEP  # time range
     # use sin predicts cos
     steps = np.linspace(start, end, TIME_STEP, dtype=int,
@@ -127,7 +127,7 @@ for step in range(90000):
     pred_y_list.append(pred_y[-1])
     pred_y_list2.append(y[-1, -1, :].numpy()[-1])
 
-print('| test accuracy: %.2f' % (sum(total_ac)/len(total_ac)))
+print('test accuracy: %.2f' % (sum(total_ac)/len(total_ac)))
 
 plt.figure()
 plt.plot(pred_y_list2)

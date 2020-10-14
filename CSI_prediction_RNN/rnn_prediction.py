@@ -15,7 +15,7 @@ import random
 # torch.manual_seed(1)    # reproducible
 
 # Hyper Parameters
-TIME_STEP = 10  # rnn time step
+TIME_STEP = 1  # rnn time step
 INPUT_SIZE = 1  # rnn input size
 LR = 0.02  # learning rate
 
@@ -23,7 +23,7 @@ LR = 0.02  # learning rate
 state_tr_matrix = np.array([[0.3, 0.1, 0.1], [0.6, 0.8, 0.5], [0.1, 0.1, 0.3]])
 state = 0
 csi = []
-for step in range(1000):
+for step in range(2000):
     csi.append(state)
     number = random.uniform(0, 1)
     cdf_prob = 0
@@ -94,7 +94,7 @@ plt.ion()  # continuously plot
 pred_y_list = []
 pred_y_list2 = []
 total_ac = []
-for step in range(900):
+for step in range(1900):
     start, end = step, step + TIME_STEP  # time range
     # use sin predicts cos
     steps = np.linspace(start, end, TIME_STEP, dtype=int,
@@ -120,29 +120,26 @@ for step in range(900):
     # plt.draw()
     # plt.pause(0.05)
 
-    x_np_test = x_np[steps+1]
-    y_np_test = y_np[steps+1]
+    if step > 1800:
+        x_np_test = x_np[steps + 1]
+        y_np_test = y_np[steps + 1]
 
-    x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])
-    y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
+        x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])
+        y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
 
-    test_output, h_state_temp = rnn(x, h_state)                   # (samples, time_step, input_size)
-    pred_y = torch.max(test_output, 1)[1].data.numpy()
-    accuracy = float((pred_y == y[-1, -1, :].numpy()).astype(int).sum())
-    print('Epoch: ', end + 1, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
+        test_output, h_state_temp = rnn(x, h_state)  # (samples, time_step, input_size)
+        pred_y = torch.max(test_output, 1)[1].data.numpy()
+        accuracy = float((pred_y == y[-1, -1, :].numpy()).astype(int).sum())
+        print('Epoch: ', end + 1, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
 
-    total_ac.append(accuracy)
-    pred_y_list.append(pred_y[-1])
-    pred_y_list2.append(y[-1, -1, :].numpy()[-1])
+        total_ac.append(accuracy)
+        pred_y_list.append(pred_y[-1])
+        pred_y_list2.append(y[-1, -1, :].numpy()[-1])
 
-print('| test accuracy: %.2f' % (sum(total_ac)/len(total_ac)))
 
+print('test accuracy: %.2f' % (sum(total_ac) / len(total_ac)))
 plt.figure()
-plt.plot(pred_y_list2)
-plt.plot(pred_y_list)
+plt.plot(range(len(pred_y_list2)), pred_y_list2)
+plt.plot(range(len(pred_y_list2)), pred_y_list)
 plt.savefig("filename.png")
 plt.show()
-
-
-
-
