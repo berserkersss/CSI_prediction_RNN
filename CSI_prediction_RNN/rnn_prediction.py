@@ -12,41 +12,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-# torch.manual_seed(1)    # reproducible
-
-# Hyper Parameters
-TIME_STEP = 1  # rnn time step
-INPUT_SIZE = 1  # rnn input size
-LR = 0.02  # learning rate
-
-# show data
-state_tr_matrix = np.array([[0.3, 0.1, 0.1], [0.6, 0.8, 0.5], [0.1, 0.1, 0.3]])
-state = 0
-csi = []
-for step in range(2000):
-    csi.append(state)
-    number = random.uniform(0, 1)
-    cdf_prob = 0
-    init_state = 0
-    for prob in state_tr_matrix[:, state]:
-        cdf_prob = prob + cdf_prob
-        if number < cdf_prob:
-            state = init_state
-            break
-        else:
-            init_state = init_state + 1
-
-csi = np.array(csi)
-# steps = np.linspace(0, np.pi * 2, 100, dtype=np.float32) # float32 for converting torch FloatTensor
-steps = csi
-x_np = csi[:-1].astype(np.float32)
-y_np = csi[1:].astype(np.int64)
-
-plt.plot(np.arange(x_np.size), y_np, 'r-', label='target (cos)')
-plt.plot(np.arange(x_np.size), x_np, 'b-', label='input (sin)')
-plt.legend(loc='best')
-plt.show()
-
 
 class RNN(nn.Module):
     def __init__(self):
@@ -81,65 +46,89 @@ class RNN(nn.Module):
         # return outs
 
 
-rnn = RNN()
-print(rnn)
+# torch.manual_seed(1)    # reproducible
 
-optimizer = torch.optim.Adam(rnn.parameters(), lr=LR)  # optimize all cnn parameters
-# loss_func = nn.MSELoss()
-loss_func = nn.CrossEntropyLoss()
-h_state = None  # for initial hidden state
+# Hyper Parameters
+TIME_STEP = 1  # rnn time step
+INPUT_SIZE = 1  # rnn input size
+LR = 0.02  # learning rate
+accuracy_av = 0
+for i in range(100):
+    # show data
+    state_tr_matrix = np.array([[0.3, 0.1, 0.1], [0.6, 0.8, 0.5], [0.1, 0.1, 0.3]])
+    state = 0
+    csi = []
+    for step in range(2000):
+        csi.append(state)
+        number = random.uniform(0, 1)
+        cdf_prob = 0
+        init_state = 0
+        for prob in state_tr_matrix[:, state]:
+            cdf_prob = prob + cdf_prob
+            if number < cdf_prob:
+                state = init_state
+                break
+            else:
+                init_state = init_state + 1
 
-plt.figure(1, figsize=(12, 5))
-plt.ion()  # continuously plot
-pred_y_list = []
-pred_y_list2 = []
-total_ac = []
-for step in range(1900):
-    start, end = step, step + TIME_STEP  # time range
-    # use sin predicts cos
-    steps = np.linspace(start, end, TIME_STEP, dtype=int,
-                        endpoint=False)
+    csi = np.array(csi)
+    # steps = np.linspace(0, np.pi * 2, 100, dtype=np.float32) # float32 for converting torch FloatTensor
+    steps = csi
+    x_np = csi[:-1].astype(np.float32)
+    y_np = csi[1:].astype(np.int64)
 
-    x_np_train = x_np[steps]
-    y_np_train = y_np[steps]
+    rnn = RNN()
+    print(rnn)
 
-    x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])  # shape (batch, time_step, input_size)
-    y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
+    optimizer = torch.optim.Adam(rnn.parameters(), lr=LR)  # optimize all cnn parameters
+    # loss_func = nn.MSELoss()
+    loss_func = nn.CrossEntropyLoss()
+    h_state = None  # for initial hidden state
 
-    prediction, h_state = rnn(x, h_state)  # rnn output
-    # !! next step is important !!
-    h_state = h_state.data  # repack the hidden state, break the connection from last iteration
-    loss = loss_func(prediction, y[-1, -1, :])  # calculate loss
-    optimizer.zero_grad()  # clear gradients for this training step
-    loss.backward()  # backpropagation, compute gradients
-    optimizer.step()  # apply gradients
+    pred_y_list = []
+    pred_y_list2 = []
+    total_ac = []
+    for step in range(1900):
+        start, end = step, step + TIME_STEP  # time range
+        # use sin predicts cos
+        steps = np.linspace(start, end, TIME_STEP, dtype=int,
+                            endpoint=False)
 
-    # plotting
-    # plt.plot(steps, y_np_train.flatten(), 'r-')
-    # plt.plot(steps[-1], prediction.data.numpy().flatten(), 'b-')
-    # plt.draw()
-    # plt.pause(0.05)
+        x_np_train = x_np[steps]
+        y_np_train = y_np[steps]
 
-    if step > 1800:
-        x_np_test = x_np[steps + 1]
-        y_np_test = y_np[steps + 1]
-
-        x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])
+        x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])  # shape (batch, time_step, input_size)
         y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
 
-        test_output, h_state_temp = rnn(x, h_state)  # (samples, time_step, input_size)
-        pred_y = torch.max(test_output, 1)[1].data.numpy()
-        accuracy = float((pred_y == y[-1, -1, :].numpy()).astype(int).sum())
-        print('Epoch: ', end + 1, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
+        prediction, h_state = rnn(x, h_state)  # rnn output
+        # !! next step is important !!
+        h_state = h_state.data  # repack the hidden state, break the connection from last iteration
+        loss = loss_func(prediction, y[-1, -1, :])  # calculate loss
+        optimizer.zero_grad()  # clear gradients for this training step
+        loss.backward()  # backpropagation, compute gradients
+        optimizer.step()  # apply gradients
 
-        total_ac.append(accuracy)
-        pred_y_list.append(pred_y[-1])
-        pred_y_list2.append(y[-1, -1, :].numpy()[-1])
+        # plotting
+        # plt.plot(steps, y_np_train.flatten(), 'r-')
+        # plt.plot(steps[-1], prediction.data.numpy().flatten(), 'b-')
+        # plt.draw()
+        # plt.pause(0.05)
 
+        if step > 1800:
+            x_np_test = x_np[steps + 1]
+            y_np_test = y_np[steps + 1]
 
-print('test accuracy: %.2f' % (sum(total_ac) / len(total_ac)))
-plt.figure()
-plt.plot(range(len(pred_y_list2)), pred_y_list2)
-plt.plot(range(len(pred_y_list2)), pred_y_list)
-plt.savefig("filename.png")
-plt.show()
+            x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])
+            y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
+
+            test_output, h_state_temp = rnn(x, h_state)  # (samples, time_step, input_size)
+            pred_y = torch.max(test_output, 1)[1].data.numpy()
+            accuracy = float((pred_y == y[-1, -1, :].numpy()).astype(int).sum())
+            print('Epoch: ', end + 1, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
+
+            total_ac.append(accuracy)
+            pred_y_list.append(pred_y[-1])
+            pred_y_list2.append(y[-1, -1, :].numpy()[-1])
+
+    accuracy_av = sum(total_ac) / len(total_ac) + accuracy_av
+print('test accuracy: %.2f' % accuracy_av)
