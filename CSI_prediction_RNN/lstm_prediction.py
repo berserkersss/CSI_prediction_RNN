@@ -15,7 +15,7 @@ import random
 # torch.manual_seed(1)    # reproducible
 
 # Hyper Parameters
-TIME_STEP = 10  # rnn time step
+TIME_STEP = 900  # rnn time step
 INPUT_SIZE = 1  # rnn input size
 LR = 0.02  # learning rate
 
@@ -23,7 +23,7 @@ LR = 0.02  # learning rate
 state_tr_matrix = np.array([[0.3, 0.1, 0.1], [0.6, 0.8, 0.5], [0.1, 0.1, 0.3]])
 state = 0
 csi = []
-for step in range(1000):
+for step in range(100000):
     csi.append(state)
     number = random.uniform(0, 1)
     cdf_prob = 0
@@ -42,32 +42,27 @@ steps = csi
 x_np = csi[:-1].astype(np.float32)
 y_np = csi[1:].astype(np.int64)
 
-plt.plot(np.arange(x_np.size), y_np, 'r-', label='target (cos)')
-plt.plot(np.arange(x_np.size), x_np, 'b-', label='input (sin)')
-plt.legend(loc='best')
-plt.show()
-
 
 class RNN(nn.Module):
     def __init__(self):
         super(RNN, self).__init__()
 
-        self.rnn = nn.RNN(
+        self.rnn = nn.LSTM(  # if use nn.RNN(), it hardly learns
             input_size=INPUT_SIZE,
-            hidden_size=32,  # rnn hidden unit
+            hidden_size=64,  # rnn hidden unit
             num_layers=1,  # number of rnn layer
             batch_first=True,  # input & output will has batch size as 1s dimension. e.g. (batch, time_step, input_size)
         )
-        self.out = nn.Linear(32, 3)
+        self.out = nn.Linear(64, 3)
 
-    def forward(self, x, h_state):
+    def forward(self, x):
         # x (batch, time_step, input_size)
         # h_state (n_layers, batch, hidden_size)
         # r_out (batch, time_step, hidden_size)
-        r_out, h_state = self.rnn(x, h_state)
+        r_out, (h_n, h_c) = self.rnn(x, None)
 
         outs = self.out(r_out[:, -1, :])
-        return outs, h_state
+        return outs
 
         # instead, for simplicity, you can replace above codes by follows
         # r_out = r_out.view(-1, 32)
@@ -94,7 +89,7 @@ plt.ion()  # continuously plot
 pred_y_list = []
 pred_y_list2 = []
 total_ac = []
-for step in range(900):
+for step in range(90000):
     start, end = step, step + TIME_STEP  # time range
     # use sin predicts cos
     steps = np.linspace(start, end, TIME_STEP, dtype=int,
@@ -106,14 +101,11 @@ for step in range(900):
     x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])  # shape (batch, time_step, input_size)
     y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
 
-    prediction, h_state = rnn(x, h_state)  # rnn output
-    # !! next step is important !!
-    h_state = h_state.data  # repack the hidden state, break the connection from last iteration
-    loss = loss_func(prediction, y[-1, -1, :])  # calculate loss
+    output = rnn(x)  # rnn output
+    loss = loss_func(output, y[-1, -1, :])  # cross entropy loss
     optimizer.zero_grad()  # clear gradients for this training step
     loss.backward()  # backpropagation, compute gradients
-    optimizer.step()  # apply gradients
-
+    optimizer.step()
     # plotting
     # plt.plot(steps, y_np_train.flatten(), 'r-')
     # plt.plot(steps[-1], prediction.data.numpy().flatten(), 'b-')
@@ -126,7 +118,7 @@ for step in range(900):
     x = torch.from_numpy(x_np_train[np.newaxis, :, np.newaxis])
     y = torch.from_numpy(y_np_train[np.newaxis, :, np.newaxis])
 
-    test_output, h_state_temp = rnn(x, h_state)                   # (samples, time_step, input_size)
+    test_output = rnn(x)                   # (samples, time_step, input_size)
     pred_y = torch.max(test_output, 1)[1].data.numpy()
     accuracy = float((pred_y == y[-1, -1, :].numpy()).astype(int).sum())
     print('Epoch: ', end + 1, '| train loss: %.4f' % loss.data.numpy(), '| test accuracy: %.2f' % accuracy)
