@@ -7,16 +7,8 @@ import matplotlib.pyplot as plt
 import random
 
 # GRU net
-dim_in = 6
-dim_out = 1
-n_layer = 1
-TIME_STEP = 1  # rnn time step
-LR = 0.02  # learning rate
-gru = GRU(dim_in, dim_out, n_layer)
-print(gru)
-optimizer = torch.optim.Adam(gru.parameters(), lr=LR)  # optimize all cnn parameters
-loss_func = nn.MSELoss()
-h_state = None  # for initial hidden state
+TIME_STEP = 15
+gru = torch.load("./gru1.pth")
 
 # subframe
 scaling = 1
@@ -59,6 +51,7 @@ state_T = 1000
 loss_record = []
 pre_buffer_record = []
 rel_buffer_record = []
+
 for i in range(MT):
     bs_buffer_record = []
     ue_buffer_record = []
@@ -72,10 +65,10 @@ for i in range(MT):
     buffer_prediction = 0
     point = round(random.uniform(0, 1) * drx)
 
-    state_list = []
-    buffer_list = []
-    drx_list = []  # [0:sleep , 1: avtive time]
-    ue_buffer_list = []
+    state_list = [0] * TIME_STEP
+    buffer_list = [0] * TIME_STEP
+    drx_list = [0] * TIME_STEP  # [0:sleep , 1: avtive time]
+    ue_buffer_list = [0] * TIME_STEP
 
     for j in range(number):
         N = round(2000 + random.uniform(-500, 500))
@@ -87,51 +80,6 @@ for i in range(MT):
         delay = []
         buffer = buffer + sp_time
         while True:
-            # 网络训练数据更新
-            if t >= 1:
-                state_list.insert(0, state)
-                buffer_list.insert(0, buffer)
-                if bool_inactive or bool_on:
-                    drx_list.insert(0, 1)
-                else:
-                    drx_list.insert(0, 0)
-                ue_buffer_list.insert(0, ue_buffer)
-                if len(buffer_list) > TIME_STEP:
-                    state_list.pop(-1)
-                    buffer_list.pop(-1)
-                    drx_list.pop(-1)
-
-                    max_buffer_list = np.ones(TIME_STEP) * max_buffer
-                    read_speed_list = np.ones(TIME_STEP) * read_speed
-
-                    data = np.vstack((max_buffer_list, read_speed_list))
-                    data = np.vstack((data, np.array(state_list)))
-                    data = np.vstack((data, np.array(buffer_list)))
-                    data = np.vstack((data, np.array(drx_list)))
-                    data = np.vstack((data, np.array(ue_buffer_list[1:])))
-
-                    ue_buffer_list.pop(-1)
-
-                    x_train = torch.from_numpy(data.T.reshape(1, data.T.shape[0], data.T.shape[1]))
-                    x_train = torch.tensor(x_train, dtype=torch.float32)
-
-                    y = np.array(ue_buffer_list[0]).reshape((1, 1))
-
-                    prediction, h_state = gru(x_train)  # rnn output
-                    # !! next step is important !!
-                    loss = loss_func(prediction, torch.tensor(y, dtype=torch.float32))  # calculate loss
-                    optimizer.zero_grad()  # clear gradients for this training step
-                    loss.backward()  # backpropagation, compute gradients
-                    optimizer.step()  # apply gradients
-
-                    loss_record.append(loss.item())
-                    if t % 100 == 0:
-                        pre_buffer_record.append(prediction.item())
-                        rel_buffer_record.append(y[0, 0])
-
-                        print("t:", t, "  loss:", loss.item())
-                        print('t:', t, ' 预测值：', prediction.item(), '真实值:', ue_buffer)
-
             # 信道状态转移
             if t % state_T == 0:
                 number = random.uniform(0, 1)
@@ -214,11 +162,45 @@ for i in range(MT):
                         power_sum = power_sum + p_tr
                         bool_sleep = 1
 
+            # AI buffer_prediction
+            buffer_pre_temp = buffer_prediction
+
+            state_list.insert(0, state)
+            buffer_list.insert(0, buffer)
+            if bool_inactive or bool_on:
+                drx_list.insert(0, 1)
+            else:
+                drx_list.insert(0, 0)
+
+            ue_buffer_list.insert(0, buffer_pre_temp)
+            if len(buffer_list) > TIME_STEP:
+                state_list.pop(-1)
+                buffer_list.pop(-1)
+                drx_list.pop(-1)
+                ue_buffer_list.pop(-1)
+
+                max_buffer_list = np.ones(TIME_STEP) * max_buffer
+                read_speed_list = np.ones(TIME_STEP) * read_speed
+
+                data = np.vstack((max_buffer_list, read_speed_list))
+                data = np.vstack((data, np.array(state_list)))
+                data = np.vstack((data, np.array(buffer_list)))
+                data = np.vstack((data, np.array(drx_list)))
+                data = np.vstack((data, np.array(ue_buffer_list)))
+
+                x_train = torch.from_numpy(data.T.reshape(1, data.T.shape[0], data.T.shape[1]))
+                x_train = torch.tensor(x_train, dtype=torch.float32)
+                prediction, h_state = gru(x_train)  # rnn output
+
+                buffer_prediction = prediction.item()
+
+                pre_buffer_record.append(prediction.item())
+
             # buffer 策略
             if bool_scheme:
-                if ue_buffer < max_buffer * 0.3 and bool_buffer == 1:
+                if buffer_prediction < max_buffer * 0.3 and bool_buffer == 1:
                     bool_buffer = 0
-                if ue_buffer > max_buffer * 0.7 and bool_buffer == 0:
+                if buffer_prediction > max_buffer * 0.7 and bool_buffer == 0:
                     bool_buffer = 1
 
                 if bool_buffer:
@@ -249,9 +231,9 @@ for i in range(MT):
             bs_buffer_record.append(buffer)
             ue_buffer_record.append(ue_buffer)
 
+            print('t:', t, ' 预测值：', buffer_prediction, '真实值:', ue_buffer)
+            print('active', bool_on or bool_inactive, 'state', state)
             t = t + 1
-            # AI buffer_prediction
-            buffer_pre_temp = buffer_prediction
 
             if ue_buffer > 0:
                 ue_buffer = ue_buffer - read_speed
@@ -265,14 +247,12 @@ for i in range(MT):
             sleep_timer = sleep_timer - 1
 
             gap = gap - 1
-            #torch.save(gru, "./gru1.pth")
-
             if ue_buffer == 0 and gap_times >= N - 1:
                 break
 
         power_av = power_sum / t + power_av
 
-torch.save(gru, "./gru1.pth")
+torch.save(gru, 'gru1')
 
 plt.figure()
 plt.plot(pre_buffer_record, 'r-')

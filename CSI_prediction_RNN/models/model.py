@@ -63,15 +63,16 @@ class GRU(nn.Module):
         super(GRU, self).__init__()
         self.gru = nn.GRU(input_size=dim_in, hidden_size=64, num_layers=n_layers, batch_first=True)
         self.out = nn.Linear(64, dim_out)
+        self.hidden = None
 
-    def forward(self, x, h_state):
+    def forward(self, x):
         # x (batch, time_step, input_size)
         # h_state (n_layers, batch, hidden_size)
         # r_out (batch, time_step, hidden_size)
-        r_out, h_state = self.gru(x, h_state)
+        r_out, self.hidden = self.gru(x)
 
         outs = self.out(r_out[:, -1, :])
-        return outs, h_state
+        return outs, self.hidden
 
         # instead, for simplicity, you can replace above codes by follows
         # r_out = r_out.view(-1, 32)
